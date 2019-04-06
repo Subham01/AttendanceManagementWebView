@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as firebase from 'firebase';
+import Modal from "react-responsive-modal";
 import Loader from './Loader';
 
 export default class AddQuiz extends Component {
@@ -19,6 +20,7 @@ export default class AddQuiz extends Component {
         jdata: null,
         qno: 0,
         editSelect: -1,
+        open: false,
     }
     componentDidMount() {
         let jdata;
@@ -45,6 +47,13 @@ export default class AddQuiz extends Component {
             this.setState({ loading: false })
         }
     }
+    onOpenModal = () => {
+        this.setState({ open: true });
+    };
+
+    onCloseModal = () => {
+        this.setState({ open: false });
+    };
     getQuizNumber = () => {
         console.log("class " + this.props.class)
         firebase.database().ref(`quiz/${this.props.class}`)
@@ -146,7 +155,11 @@ export default class AddQuiz extends Component {
                     </div>
                     <br />
                     <button onClick={this.addQuestion.bind(this)}>Add</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <button onClick={this.submitQuestion.bind(this)}>Submit</button>
+                    <button onClick={this.onOpenModal}>Submit</button>
+                    <Modal open={this.state.open} onClose={this.onCloseModal} center>
+                        {this.displayQuiz()}
+                        <button onClick={this.submitQuestion.bind(this)}>Submit</button>
+                    </Modal>
                 </form>
             </div>
         );
@@ -185,7 +198,7 @@ export default class AddQuiz extends Component {
                         {option}
                         <p>correct Answere: {_question.options[_question.correctoption]}</p>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <button onClick={(e)=>{e.preventDefault();this.setState({ editSelect: index });this.editSelected(index)}}>Edit Question</button>
+                        <button onClick={(e)=>{e.preventDefault();this.setState({ editSelect: index,open:false });this.editSelected(index)}}>Edit Question</button>
                         <div><hr /></div>
                     </div>
                 );
