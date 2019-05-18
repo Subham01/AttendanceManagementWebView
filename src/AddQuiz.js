@@ -79,37 +79,44 @@ export default class AddQuiz extends Component {
             this.getQuizNumber();
         }
         e.preventDefault();
-        const { question, option1, option2, option3, option4, correctoption, editSelect } = this.state;
-        const options = {
-            options1: option1,
-            options2: option2,
-            options3: option3,
-            options4: option4,
+        const { question, option1, option2, option3, option4, correctoption, editSelect, duration } = this.state;
+        if(!duration) {
+            alert('Duration Of exam missing!');
         }
-        const newQuestion = {
-            correctoption: correctoption,
-            options: options,
-            question: question
-        };
-        if(editSelect !== -1) {
-            const ques = "question" + editSelect;
-            const _question = {};
-            _question[ques] = newQuestion;
-            let questionList = this.state.questionList;
-            questionList[editSelect] = _question;
-            this.setState({ questionList: questionList, editSelect: -1, question: '', option1: '', option2: '', option3: '', option4: '', correctoption: '' });
+        if(question && option1 && option2 && option3 && option4 && correctoption) {
+            const options = {
+                options1: option1,
+                options2: option2,
+                options3: option3,
+                options4: option4,
+            }
+            const newQuestion = {
+                correctoption: correctoption,
+                options: options,
+                question: question
+            };
+            if(editSelect !== -1) {
+                const ques = "question" + editSelect;
+                const _question = {};
+                _question[ques] = newQuestion;
+                let questionList = this.state.questionList;
+                questionList[editSelect] = _question;
+                this.setState({ questionList: questionList, editSelect: -1, question: '', option1: '', option2: '', option3: '', option4: '', correctoption: '' });
+            } else {
+                const ques = "question" + this.state.count;
+                this.setState({ count: this.state.count + 1 });
+                const _question = {};
+                _question[ques] = newQuestion;
+                let questionList = this.state.questionList;
+                questionList = [...questionList, _question];
+                this.setState({ questionList: questionList, question: '', option1: '', option2: '', option3: '', option4: '', correctoption: '' });
+            }
+            let radioButton = document.getElementsByName("option");
+            for(let i=0;i<radioButton.length;i++)
+                radioButton[i].checked = false;
         } else {
-            const ques = "question" + this.state.count;
-            this.setState({ count: this.state.count + 1 });
-            const _question = {};
-            _question[ques] = newQuestion;
-            let questionList = this.state.questionList;
-            questionList = [...questionList, _question];
-            this.setState({ questionList: questionList, question: '', option1: '', option2: '', option3: '', option4: '', correctoption: '' });
+            alert('Feild missing')
         }
-        let radioButton = document.getElementsByName("option");
-        for(let i=0;i<radioButton.length;i++)
-            radioButton[i].checked = false;
     };
     correctAnswere = (event) => {
         this.setState({ correctoption: event.target.value })
@@ -120,14 +127,15 @@ export default class AddQuiz extends Component {
         firebase.database().ref(`quiz/${this.props.class}`)
             .update({ countQuiz: this.state.countQuiz + 1 })
         firebase.database().ref(`quiz/${this.props.class}/quiz`)
-            .set({ quiz1: questionList, duration: duration }, () => this.setState({ duration: '' }));
+            .set({ quiz1: questionList, duration: duration }, () => this.setState({ duration: '' }))
+            .then(window.location.reload())
     };
     quizForm = () => {
         return (
             <div>
                 <label>Enter Time Duration:</label>&nbsp;&nbsp;&nbsp;&nbsp;
                 <input className="input-question" value={this.state.duration} placeholder="Minutes"
-                    onChange={this.handleChange.bind(this)} id="duration" type="text" required /><br /><br />
+                    onChange={this.handleChange.bind(this)} id="duration" type="text" /><br /><br />
                 <form>
                     <label>Question: </label>
                     <input className="input-question" value={this.state.question}
@@ -158,7 +166,7 @@ export default class AddQuiz extends Component {
                     <button onClick={this.onOpenModal}>Submit</button>
                     <Modal open={this.state.open} onClose={this.onCloseModal} center>
                         {this.displayQuiz()}
-                        <button onClick={this.submitQuestion.bind(this)}>Submit</button>
+                        <button onClick={this.submitQuestion.bind(this)} style={{color:'green'}}>Submit</button>
                     </Modal>
                 </form>
             </div>
@@ -313,7 +321,7 @@ export default class AddQuiz extends Component {
     }
     render() {
         return (
-            <div>
+            <div style={{textAlign: 'center'}}>
                 {this.Body()}
             </div>
         );

@@ -44,6 +44,7 @@ class Home extends Component {
             quizExist: true,
             selectedQuiz: -1,
             message: '',
+            clicked:false,
         };
     }
     startdateChange(date) {
@@ -173,7 +174,7 @@ class Home extends Component {
                         );
                 }
             });
-            setInterval(() => {this.setState({ loading: false })}, 3000);
+            setInterval(() => {this.setState({ loading: false })}, 4000);
     }
     logout() {
         fire.auth().signOut();
@@ -247,10 +248,9 @@ class Home extends Component {
                     attendance.push(list);
                 });
         }
-        setInterval(() => { this.setState({ attendance: attendance }, () => { this.generate() }); }, 5000);
+        setInterval(() => { this.setState({ attendance: attendance }, () => { this.generate() }); }, 3000);
     }
-    getDateArray = (e) => {
-        e.preventDefault();
+    getDateArray = () => {
         const { startDate, endDate, list } = this.state;
         var start = new Date(startDate); //YYYY-MM-DD
         var end = new Date(endDate); //YYYY-MM-DD
@@ -274,7 +274,7 @@ class Home extends Component {
         }
         let dates = [];
         this.setState({ date: arr });
-        const datesRes = firebase.database().ref('attendance').child(this.state.class)
+        firebase.database().ref('attendance').child(this.state.class)
             .once("value")
             .then(snap => {
                 dates = Object.keys(snap.val());
@@ -285,16 +285,25 @@ class Home extends Component {
     renderExcelButton = () => {
         const { excelObject } = this.state;
         if (excelObject.length !== 0) {
-            const p = this.state.column.map(a => { return (<Workbook label={a} value={a} />) });
+            if(this.state.clicked){
+                this.setState({ clicked: false })
+            }
+            const p = this.state.column.map((a,index) => { return (<Workbook key={index} label={a} value={a} />) });
             return (
                 <div className="row text-center" style={{ marginTop: '100px' }}>
-                    <Workbook filename="example.xlsx" element={<button className="btn btn-lg btn-primary">Download Excel</button>}>
+                    <Workbook filename="Attendance.xlsx" element={<button className="btn btn-lg btn-primary">Download Excel</button>}>
                         <Workbook.Sheet data={this.state.excelObject} name="Attedance">
                             {p}
                         </Workbook.Sheet>
                     </Workbook>
                 </div>
             );
+        } else if(this.state.clicked) {
+            return(
+                <div>
+                    <p>Fetching Data...</p>
+                </div>
+            )
         }
     }
     _handleClick(e) {
@@ -309,7 +318,7 @@ class Home extends Component {
         quizList = Object.keys(quizList[1]);
         quizList = quizList.map((quiz, index) => {
             return (
-                <li onClick={() => { this.setState({ selectedQuiz: index }) }}><a href="#">{quiz}</a></li>
+                <li key={index} onClick={() => { this.setState({ selectedQuiz: index, message: quiz }) }}><a href="#">{quiz}</a></li>
             )
         })
         return (
@@ -361,6 +370,7 @@ class Home extends Component {
     renderMarksButton = () => {
         const { marksObject } = this.state;
         const column = ['Key', 'Name', 'Roll', 'Score'];
+        console.log(this.state.clicked);
         if (marksObject.length !== 0) {
             const p = column.map(a => { return (<Workbook label={a} value={a} />) });
             return (
@@ -372,7 +382,7 @@ class Home extends Component {
                     </Workbook>
                 </div>
             );
-        }
+        } 
     }
     showQuizName = () => {
         if (this.state.exist) {
@@ -434,7 +444,7 @@ class Home extends Component {
                             selected={this.state._endDate} onChange={this.enddateChange.bind(this)}
                         />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <button onClick={this.getDateArray}>Generate Excel</button>
+                        <button onClick={(e)=>{e.preventDefault();this.getDateArray();this.setState({clicked:true})}}>Generate Excel</button>
                     </form>
                     <div className="row text-center" style={{ marginTop: '30px' }}>
                         {this.renderExcelButton()}
