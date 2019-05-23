@@ -47,6 +47,36 @@ class Home extends Component {
             clicked:false,
         };
     }
+    componentWillMount() {
+        if(this.state.startDate === ''){
+            const { _startDate } = this.state;
+            let year = _startDate.getFullYear();
+            let month = _startDate.getMonth() + 1;
+            let day = _startDate.getDate();
+            if (day < 10) {
+                day = '0' + day;
+            }
+            if (month < 10) {
+                month = '0' + month;
+            }
+            let date = year + "-" + month + "-" + day;
+            this.setState({ startDate: date });
+        } 
+        if(this.state.endDate === ''){
+            const { _endDate } = this.state;
+            let year = _endDate.getFullYear();
+            let month = _endDate.getMonth() + 1;
+            let day = _endDate.getDate();
+            if (day < 10) {
+                day = '0' + day;
+            }
+            if (month < 10) {
+                month = '0' + month;
+            }
+            let date = year + "-" + month + "-" + day;
+            this.setState({ startDate: date });
+        } 
+    }
     startdateChange(date) {
         this.setState({
             _startDate: date
@@ -182,13 +212,17 @@ class Home extends Component {
     generate = () => {
         const { DBdates, studentKey, studentList, attendance, date } = this.state;
         let excelObject = [];
+        let daysCount = 0;
+        let attendancePercentage = new Array(studentList.length);
+        attendancePercentage.fill(0);
         for (let i = 0; i < studentList.length; i++) {
             const fname = studentList[i].firstname;
             const lname = studentList[i].lastname;
             let newObj = {
                 key: i.toString(),
                 name: fname.concat(' ').concat(lname),
-                roll: studentList[i].uroll
+                roll: studentList[i].uroll,
+                percentage: 0 
             }
             for (let j = 0; j < date.length; j++) {
                 const currentDate = date[j];
@@ -213,6 +247,9 @@ class Home extends Component {
                     }
                 }
                 const _date = day.concat('-').concat(month).concat('-').concat(year);
+                if(flag === 1) {
+                    daysCount+=1;
+                }
                 if (flag === 0) {
                     newObj[_date] = "No Class";
                 }
@@ -220,13 +257,19 @@ class Home extends Component {
                     newObj[_date] = "Absent";
                 }
                 else if (flag === 1 && pre === 1) {
+                    attendancePercentage[i] +=1;
                     newObj[_date] = "Present";
                 }
             }
             excelObject = [...excelObject, newObj];
         }
+        daysCount = daysCount/studentList.length;
+        for(let i=0;i<studentList.length;i++) {
+            let percentage = (attendancePercentage[i]/daysCount * 100);
+            excelObject[i]['percentage'] = Math.round( percentage * 10 ) / 10;
+        }
         this.setState({ excelObject: excelObject })
-        let column = ['key', 'name', 'roll'];
+        let column = ['key', 'name', 'roll', 'percentage'];
         for (let i = 0; i < date.length; i++) {
             const currentDate = date[i];
             const year = currentDate.substring(4);
@@ -254,7 +297,8 @@ class Home extends Component {
         const { startDate, endDate, list } = this.state;
         var start = new Date(startDate); //YYYY-MM-DD
         var end = new Date(endDate); //YYYY-MM-DD
-
+        console.log("startDate "+ startDate);
+        console.log("endDate " + endDate);
         var arr = new Array();
         var dt = new Date(start);
         while (dt <= end) {
